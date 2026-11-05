@@ -6,8 +6,9 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-
-const defaultPrefs = { emergency: true, announcements: false, events: false, myNotices: true };
+import {
+  defaultPrefs, loadPrefs, requestNotificationPermission, sendLocalNotification,
+} from '../services/notificationService';
 
 export default function SettingsScreen({ navigation }) {
   const { colors, isDark, toggleTheme } = useTheme();
@@ -15,15 +16,37 @@ export default function SettingsScreen({ navigation }) {
   const [prefs, setPrefs] = useState(defaultPrefs);
 
   useEffect(() => {
-    AsyncStorage.getItem('notifPrefs').then((v) => {
-      if (v) setPrefs({ ...defaultPrefs, ...JSON.parse(v) });
-    });
+    loadPrefs().then(setPrefs);
   }, []);
 
   const setPref = async (key, value) => {
     const next = { ...prefs, [key]: value };
     setPrefs(next);
     await AsyncStorage.setItem('notifPrefs', JSON.stringify(next));
+    if (value) {
+      const ok = await requestNotificationPermission();
+      if (!ok) {
+        Alert.alert(
+          'Notifications blocked',
+          'Allow notifications for this app in your phone settings to receive alerts.'
+        );
+      }
+    }
+  };
+
+  const testNotification = async () => {
+    const ok = await requestNotificationPermission();
+    if (!ok) {
+      Alert.alert(
+        'Notifications blocked',
+        'Allow notifications for this app in your phone settings first.'
+      );
+      return;
+    }
+    await sendLocalNotification(
+      'EMERGENCY: Road closed near market',
+      'This is a test alert from Community Notice Board.'
+    );
   };
 
   const handlePasswordReset = async () => {
@@ -113,9 +136,14 @@ export default function SettingsScreen({ navigation }) {
         value={prefs.myNotices}
         onChange={(v) => setPref('myNotices', v)}
       />
-      <Text style={{ color: colors.subText, fontSize: 12, marginTop: 4 }}>
-        Emergency alerts are on by default. Turn on the others if you also want them in Alerts.
+      <Text style={{ color: colors.subText, fontSize: 12, marginTop: 4, marginBottom: 8 }}>
+        Emergency alerts are on by default. Turn on the others if you also want them.
       </Text>
+      <PressRow
+        icon="notifications-outline"
+        label="Send test notification"
+        onPress={testNotification}
+      />
 
       <Section title="ACCOUNT" />
       <View style={[styles.row, { backgroundColor: colors.card, borderColor: colors.border }]}>

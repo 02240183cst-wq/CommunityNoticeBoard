@@ -63,7 +63,7 @@ export default function AppNavigator() {
   const [minDelay, setMinDelay] = useState(true);
 
   useEffect(() => {
-    const t = setTimeout(() => setMinDelay(false), 3000);
+    const t = setTimeout(() => setMinDelay(false), 1500);
     return () => clearTimeout(t);
   }, []);
 

@@ -9,6 +9,7 @@ import Button from '../components/Button';
 import ImageField from '../components/ImageField';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+import { useConnectivity } from '../context/ConnectivityContext';
 import { categories } from '../constants/categories';
 import { addNotice, updateNotice } from '../services/noticeService';
 import { getCurrentPlace } from '../services/locationService';
@@ -16,6 +17,7 @@ import { getCurrentPlace } from '../services/locationService';
 export default function CreateNoticeScreen({ navigation, route }) {
   const { colors } = useTheme();
   const { user, profile } = useAuth();
+  const { isOnline } = useConnectivity();
   const editing = route?.params?.notice;
 
   const [title, setTitle] = useState(editing?.title || '');
@@ -46,6 +48,13 @@ export default function CreateNoticeScreen({ navigation, route }) {
   const handleSubmit = async () => {
     if (!title.trim() || !description.trim() || !category) {
       Alert.alert('Missing details', 'Title, description and category are required.');
+      return;
+    }
+    if (!isOnline) {
+      Alert.alert(
+        'No internet connection',
+        'Your details are kept on this screen. Please try again when you are back online.'
+      );
       return;
     }
     const data = {
@@ -80,7 +89,7 @@ export default function CreateNoticeScreen({ navigation, route }) {
         navigation.navigate('Home');
       }
     } catch (e) {
-      Alert.alert('Error', 'Could not save the notice. Check your connection and try again.');
+      Alert.alert('Error', 'Could not save the notice. Your details are kept, so try again.');
     } finally {
       setLoading(false);
     }
