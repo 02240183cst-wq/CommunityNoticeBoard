@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert,
-  ActivityIndicator, Image, Share, Linking,
+  ActivityIndicator, Image, Share, Linking, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Button from '../components/Button';
 import ReportModal from '../components/ReportModal';
+import CommentsSection from '../components/CommentsSection';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { useFavourites } from '../context/FavouritesContext';
@@ -127,8 +128,11 @@ export default function NoticeDetailsScreen({ navigation, route }) {
   const status = getStatus(notice);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView contentContainerStyle={styles.container}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.topRow}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={26} color={colors.text} />
@@ -238,7 +242,9 @@ export default function NoticeDetailsScreen({ navigation, route }) {
           </View>
         ) : null}
 
-        <Button title="Share Notice" onPress={handleShare} outline style={{ marginTop: 24 }} />
+        <CommentsSection noticeId={id} ownerId={notice.authorId} />
+
+        <Button title="Share Notice" onPress={handleShare} outline style={{ marginTop: 28 }} />
 
         {isOwner ? (
           <View style={{ marginTop: 12 }}>
@@ -255,10 +261,7 @@ export default function NoticeDetailsScreen({ navigation, route }) {
             />
           </View>
         ) : (
-          <TouchableOpacity
-            onPress={() => setShowReport(true)}
-            style={styles.reportBtn}
-          >
+          <TouchableOpacity onPress={() => setShowReport(true)} style={styles.reportBtn}>
             <Ionicons name="flag-outline" size={18} color={colors.danger} />
             <Text style={{ color: colors.danger, fontWeight: '700', marginLeft: 6 }}>
               Report this notice
@@ -273,7 +276,7 @@ export default function NoticeDetailsScreen({ navigation, route }) {
         onSubmit={submitReport}
         loading={reporting}
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -291,7 +294,7 @@ function Row({ icon, label, value, colors }) {
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  container: { padding: 20, paddingTop: 60, paddingBottom: 50 },
+  container: { padding: 20, paddingTop: 60, paddingBottom: 60 },
   topRow: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', marginBottom: 20,
